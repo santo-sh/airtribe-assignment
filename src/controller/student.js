@@ -1,8 +1,19 @@
+const db = require('../db');
 const random = require("random");
 
 const allStudents = async (req, res) => {
   try {
-    return res.status(200).send({ err: false, data });
+
+    const query = `SELECT * FROM students`;
+
+    const data = await db.query(query);
+    console.log(data.rows);
+
+    if (data.rows.length === 0) {
+      return res.status(200).send({ err: false, message: 'Nothing to show' });
+    }
+
+    return res.status(200).send({ err: false, data: data.rows});
   } catch (error) {
     return res.status(400).send({
       err: true,
@@ -16,7 +27,16 @@ const getStudent = async (req, res) => {
     const studentId = req.params.id;
     console.log(studentId);
 
-    return res.status(200).send({ err: false, data });
+    const query = `SELECT * FROM students WHERE id = ${studentId}`;
+
+    const data = await db.query(query);
+    console.log(data.rows);
+
+    if (data.rows.length === 0) {
+      return res.status(200).send({ err: false, message: 'Nothing to show' });
+    }
+
+    return res.status(200).send({ err: false, data: data.rows});
   } catch (error) {
     return res.status(400).send({
       err: true,
@@ -27,7 +47,7 @@ const getStudent = async (req, res) => {
 
 const addStudent = async (req, res) => {
   try {
-    const { name, mobile, email } = req.body;
+    const { name, mobile, email, linkedin } = req.body;
 
     if (!name) {
       throw {
@@ -47,7 +67,18 @@ const addStudent = async (req, res) => {
       };
     }
 
-    console.log(req.body);
+    if(!linkedin){
+      throw {
+        message: "Student linkedin url is required",
+      }
+    }
+
+    let id = random.int(1, 1000);
+
+    let query = `INSERT INTO students(id, name, email, mobile, link) VALUES(${id}, '${name}', '${email}', '${mobile}', '${linkedin}');`;
+
+    let data = await db.query(query);
+    console.log(data.rows);
 
     return res
       .status(200)
@@ -65,7 +96,18 @@ const updateStudent = async (req, res) => {
     const studentId = req.params.id;
     console.log(studentId);
 
-    const { name, mobile, email } = req.body;
+    let query = `select count(*) from students where id = ${studentId};`;
+    
+    let data = await db.query(query);
+    console.log(data.rows);
+
+    if(data.rows[0].count === '0'){
+      throw {
+        message: "student not found"
+      }
+    }
+
+    const { name, mobile, email, linkedin } = req.body;
 
     if (!name) {
       throw {
@@ -85,7 +127,17 @@ const updateStudent = async (req, res) => {
       };
     }
 
-    console.log(req.body);
+    if(!linkedin){
+      throw {
+        message: "Student linkedin url is required",
+      }
+    }
+
+    query = `UPDATE students
+            SET name = '${name}', mobile = '${mobile}', email = '${email}', link = '${linkedin}' WHERE id = ${studentId};`;
+
+    data = await db.query(query);
+    console.log(data.rows);
 
     return res
       .status(200)
@@ -103,6 +155,19 @@ const deleteStudent = async (req, res) => {
     const studentId = req.params.id;
     console.log(studentId);
 
+    let query = `select count(*) from students WHERE id = ${studentId};`;
+
+    let data = await db.query(query);
+    console.log(data.rows);
+
+    if(data.rows[0].count === '0'){
+      return res.status(200).send({ err: false, message: "Student not found" });
+    }
+
+    query = `delete from students where id = ${studentId};`; 
+    data = await db.query(query);
+    console.log(data.rows);
+
     return res
       .status(200)
       .send({ err: false, message: "Student data deleted successfully" });
@@ -118,6 +183,39 @@ const addCommentOnStudent = async (req, res) => {
   try {
     const studentId = req.params.id;
     console.log(studentId);
+    
+    const {
+      courseId, 
+      comment
+    } = req.body;
+    
+    if(!courseId) {
+      throw {
+        message: "Course ID is required",
+      }
+    }
+
+    if(!comment) {
+      throw {
+        message: "Comment is required",
+      }
+    }
+
+    let query = `select count(*) from registrations WHERE sid = ${studentId} and cid = ${courseId};`;
+
+    let data = await db.query(query);
+    console.log(data.rows);
+
+    if(data.rows[0].count === '0'){
+      throw {
+        message: "Student not found",
+      }
+    }
+
+
+    query = `UPDATE registrations SET comment ='${comment}' WHERE sid = ${studentId} and cid = ${courseId};`;
+    data = await db.query(query);
+    console.log(data.rows);
 
     return res
       .status(200)

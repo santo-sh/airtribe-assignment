@@ -1,6 +1,19 @@
+const db = require('../db');
+const random = require('random');
+
 const allCourses = async (req, res) => {
   try {
-    return res.status(200).send({ err: false, data });
+
+    const query = `SELECT * FROM courses`;
+
+    const data = await db.query(query);
+    console.log(data.rows);
+
+    if (data.rows.length === 0) {
+      return res.status(200).send({ err: false, message: 'Nothing to show' });
+    }
+
+    return res.status(200).send({ err: false, data: data.rows});
   } catch (error) {
     return res.status(400).send({
       err: true,
@@ -14,7 +27,16 @@ const getCourse = async (req, res) => {
     const courseId = req.params.id;
     console.log(courseId);
 
-    return res.status(200).send({ err: false, data });
+    const query = `SELECT * FROM courses WHERE courseId = ${courseId}`;
+
+    const data = await db.query(query);
+    console.log(data.rows);
+
+    if (data.rows.length === 0) {
+      return res.status(200).send({ err: false, message: 'Course not found' });
+    }
+
+    return res.status(200).send({ err: false, data: data.rows});
   } catch (error) {
     return res.status(400).send({
       err: true,
@@ -25,7 +47,7 @@ const getCourse = async (req, res) => {
 
 const createCourse = async (req, res) => {
   try {
-    const { courseName, startDate, duration, instructorName, maxSeats } = req.body;
+    const { courseName, instructorId, startDate, maxSeats } = req.body;
 
     if (!courseName) {
       throw {
@@ -39,15 +61,9 @@ const createCourse = async (req, res) => {
       };
     }
 
-    if (!duration) {
+    if (!instructorId) {
       throw {
-        message: "Course duration is required",
-      };
-    }
-
-    if (!instructorName) {
-      throw {
-        message: "Course instructor name is required",
+        message: "Course instructor Id is required",
       };
     }
 
@@ -58,6 +74,15 @@ const createCourse = async (req, res) => {
     }
 
     console.log(req.body);
+
+
+    const courseId = random.int(1, 1000);
+
+    const query = `INSERT INTO courses(courseId, courseName, instructorId, startDate, maxSeats ) VALUES(${courseId}, '${courseName}', ${instructorId}, '${startDate}', ${maxSeats});`;
+
+    const data = await db.query(query);
+    console.log(data.rows);
+
 
     return res
       .status(200)
@@ -75,7 +100,18 @@ const updateCourse = async (req, res) => {
     const courseId = req.params.id;
     console.log(courseId);
 
-    const { courseName, startDate, duration, instructorName, maxSeats } = req.body;
+    let query = `select count(*) from courses where courseId = ${courseId};`;
+
+    let data = await db.query(query);
+    console.log(data.rows);
+
+    if(data.rows[0].count === '0'){
+      throw {
+        message: "Course not found"
+      }
+    }
+
+    const { courseName, startDate, instructorId, maxSeats } = req.body;
 
     if (!courseName) {
       throw {
@@ -89,15 +125,9 @@ const updateCourse = async (req, res) => {
       };
     }
 
-    if (!duration) {
+    if (!instructorId) {
       throw {
-        message: "Course duration is required",
-      };
-    }
-
-    if (!instructorName) {
-      throw {
-        message: "Course instructor name is required",
+        message: "Course instructor id is required",
       };
     }
 
@@ -107,7 +137,12 @@ const updateCourse = async (req, res) => {
       }
     }
 
-    console.log(req.body);
+    
+    query = `UPDATE courses 
+            SET courseName = '${courseName}', startDate = '${startDate}', instructorId = ${instructorId}, maxSeats = ${maxSeats} WHERE courseId = '${courseId}';`;
+
+    data = await db.query(query);
+    console.log(data.rows);
 
     return res
       .status(200)
@@ -124,6 +159,21 @@ const deleteCourse = async (req, res) => {
   try {
     const courseId = req.params.id;
     console.log(courseId);
+
+    let query = `select count(*) from courses where courseId = ${courseId};`;
+
+    let data = await db.query(query);
+    console.log(data.rows);
+
+    if(data.rows[0].count === '0'){
+      throw {
+        message: "Course not found"
+      }
+    }
+
+    query = `delete from courses where courseId = ${courseId};`; 
+    data = await db.query(query);
+    console.log(data.rows);
 
     return res
       .status(200)
@@ -142,7 +192,24 @@ const registerCourse = async (req, res) => {
     const courseId = req.params.id;
     console.log(courseId);
 
-    const { name, email, mobile, linkedin } = req.body;
+    const { id, name, email, mobile, linkedin } = req.body;
+
+    let query = `select count(*) from courses where courseId = ${courseId};`;
+
+    let data = await db.query(query);
+    console.log(data.rows);
+
+    if(data.rows[0].count === '0'){
+      throw {
+        message: "Course not found"
+      }
+    }
+
+    if(!id) {
+      throw {
+        message: "Student id is required"
+      }
+    }
 
     if (!name) {
       throw {
@@ -162,6 +229,32 @@ const registerCourse = async (req, res) => {
       }
     }
 
+    if(!linkedin){
+      throw {
+        message: "Student linkedin is required",
+      }
+    }
+
+    query = `select count(*) from students where id = ${id};`;
+
+    data = await db.query(query);
+    console.log(data.rows);
+
+    if(data.rows[0].count === '0'){
+
+      query = `INSERT INTO students(id, name, email, mobile, link) VALUES(${id}, '${name}', '${email}', '${mobile}', '${linkedin}')`;
+      data = await db.query(query);
+      console.log(data.rows);
+
+    }
+
+    let comment = 'waitlist'
+
+    query = `INSERT INTO registrations(sid, cid, comment) VALUES(${id}, '${courseId}', '${comment}');`;
+
+    data = await db.query(query);
+    console.log(data.rows);
+
     return res
       .status(200)
       .send({ err: false, message: "Course registered successfully" })
@@ -173,6 +266,21 @@ const registerCourse = async (req, res) => {
   }
 };
 
+const allRegistered = async( req, res) => {
+  try {
+    let query = `SELECT * FROM registrations`;
+    let data = await db.query(query);
+    console.log(data.rows);
+
+    return res.status(200).send({ err: false, data: data.rows });
+
+  }catch(error){
+    return res.status(400).send({
+      status: false,
+      message: error.message || "Something went wrong",
+    });
+  }
+}
 
 module.exports = {
   allCourses,
@@ -181,4 +289,5 @@ module.exports = {
   updateCourse,
   deleteCourse,
   registerCourse,
+  allRegistered
 };
