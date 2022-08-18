@@ -3,7 +3,7 @@ const db = require('../db');
 
 const allInstructors = async (req, res) => {
   try {
-
+    
     const query = `SELECT * FROM instructors`;
 
     const data = await db.query(query);

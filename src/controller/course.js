@@ -242,7 +242,7 @@ const registerCourse = async (req, res) => {
 
     if(data.rows[0].count === '0'){
 
-      query = `INSERT INTO students(id, name, email, mobile, link) VALUES(${id}, '${name}', '${email}', '${mobile}', '${linkedin}')`;
+      query = `INSERT INTO students(id, name, email, mobile, linkedin) VALUES(${id}, '${name}', '${email}', '${mobile}', '${linkedin}')`;
       data = await db.query(query);
       console.log(data.rows);
 
@@ -271,6 +271,10 @@ const allRegistered = async( req, res) => {
     let query = `SELECT * FROM registrations`;
     let data = await db.query(query);
     console.log(data.rows);
+
+    if(data.rows.length === 0) {
+      return res.status(200).send({ err: false, message: "Nothing to show"});
+    }
 
     return res.status(200).send({ err: false, data: data.rows });
 
