@@ -134,7 +134,7 @@ const updateStudent = async (req, res) => {
     }
 
     query = `UPDATE students
-            SET name = '${name}', mobile = '${mobile}', email = '${email}', link = '${linkedin}' WHERE id = ${studentId};`;
+            SET name = '${name}', mobile = '${mobile}', email = '${email}', linkedin = '${linkedin}' WHERE id = ${studentId};`;
 
     data = await db.query(query);
     console.log(data.rows);
