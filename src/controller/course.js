@@ -248,9 +248,7 @@ const registerCourse = async (req, res) => {
 
     }
 
-    let comment = 'waitlist'
-
-    query = `INSERT INTO registrations(sid, cid, comment) VALUES(${id}, '${courseId}', '${comment}');`;
+    query = `INSERT INTO enrollments(sid, cid) VALUES(${id}, ${courseId});`;
 
     data = await db.query(query);
     console.log(data.rows);
@@ -268,7 +266,7 @@ const registerCourse = async (req, res) => {
 
 const allRegistered = async( req, res) => {
   try {
-    let query = `SELECT * FROM registrations`;
+    let query = `SELECT * FROM enrollments`;
     let data = await db.query(query);
     console.log(data.rows);
 

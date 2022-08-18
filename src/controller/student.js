@@ -201,7 +201,7 @@ const addCommentOnStudent = async (req, res) => {
       }
     }
 
-    let query = `select count(*) from registrations WHERE sid = ${studentId} and cid = ${courseId};`;
+    let query = `select count(*) from enrollments WHERE sid = ${studentId} and cid = ${courseId};`;
 
     let data = await db.query(query);
     console.log(data.rows);
@@ -212,8 +212,7 @@ const addCommentOnStudent = async (req, res) => {
       }
     }
 
-
-    query = `UPDATE registrations SET comment ='${comment}' WHERE sid = ${studentId} and cid = ${courseId};`;
+    query = `UPDATE enrollments SET comment ='${comment}' WHERE sid = ${studentId} and cid = ${courseId};`;
     data = await db.query(query);
     console.log(data.rows);
 
@@ -232,6 +231,35 @@ const updateStudentStatus = async (req, res) => {
   try {
     const studentId = req.params.id;
     console.log(studentId);
+
+    const {courseId, status} = req.body;
+
+    if(!courseId){
+      throw {
+        message: "Course ID is required",
+      }
+    }
+    
+    if(!status){
+      throw {
+        message: "Status is required",
+      };
+    }
+
+    let query = `select count(*) from enrollments WHERE sid = ${studentId} and cid = ${courseId};`;
+
+    let data = await db.query(query);
+    console.log(data.rows);
+
+    if(data.rows[0].count === '0'){
+      throw {
+        message: "Student not found",
+      }
+    }
+
+    query = `UPDATE enrollments SET status ='${status}' WHERE sid = ${studentId} and cid = ${courseId};`;
+    data = await db.query(query);
+    console.log(data.rows);
 
     return res
       .status(200)
